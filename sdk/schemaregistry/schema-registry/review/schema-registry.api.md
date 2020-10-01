@@ -21,41 +21,34 @@ export interface RegisterSchemaOptions extends OperationOptions {
 }
 
 // @public
-export interface Schema extends SchemaId {
-    content: string;
+export interface Schema {
+    schemaContent: string;
+    schemaProperties: SchemaProperties;
 }
 
 // @public
-export interface SchemaDescription {
-    content: string;
-    group: string;
-    name: string;
-    serializationType: string;
-}
-
-// @public
-export interface SchemaId {
-    id: string;
+export interface SchemaProperties {
     location: string;
     locationById: string;
+    schemaId: string;
     serializationType: string;
     version: number;
 }
 
 // @public
 export interface SchemaRegistry {
-    getSchemaById(id: string, options?: GetSchemaByIdOptions): Promise<Schema>;
-    getSchemaId(schema: SchemaDescription, options?: GetSchemaIdOptions): Promise<SchemaId>;
-    registerSchema(schema: SchemaDescription, options?: RegisterSchemaOptions): Promise<SchemaId>;
+    getSchema(id: string, options?: GetSchemaByIdOptions): Promise<Schema>;
+    getSchemaId(schemaGroup: string, schemaName: string, serializationType: string, schemaContent: string, options?: GetSchemaIdOptions): Promise<SchemaProperties>;
+    registerSchema(schemaGroup: string, schemaName: string, serializationType: string, schemaContent: string, options?: RegisterSchemaOptions): Promise<SchemaProperties>;
 }
 
 // @public
 export class SchemaRegistryClient implements SchemaRegistry {
     constructor(endpoint: string, credential: TokenCredential, options?: SchemaRegistryClientOptions);
     readonly endpoint: string;
-    getSchemaById(id: string, options?: GetSchemaByIdOptions): Promise<Schema>;
-    getSchemaId(schema: SchemaDescription, options?: GetSchemaIdOptions): Promise<SchemaId>;
-    registerSchema(schema: SchemaDescription, options?: RegisterSchemaOptions): Promise<SchemaId>;
+    getSchema(id: string, options?: GetSchemaByIdOptions): Promise<Schema>;
+    getSchemaId(schemaGroup: string, schemaName: string, serializationType: string, schemaContent: string, options?: GetSchemaIdOptions): Promise<SchemaProperties>;
+    registerSchema(schemaGroup: string, schemaName: string, serializationType: string, schemaContent: string, options?: RegisterSchemaOptions): Promise<SchemaProperties>;
 }
 
 // @public

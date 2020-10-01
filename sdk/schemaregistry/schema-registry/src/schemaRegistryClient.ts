@@ -10,11 +10,10 @@ import { convertSchemaIdResponse, convertSchemaResponse } from "./conversions";
 import {
   GetSchemaByIdOptions,
   GetSchemaIdOptions,
-  SchemaDescription,
   SchemaRegistryClientOptions,
   SchemaRegistry,
   RegisterSchemaOptions,
-  SchemaId,
+  SchemaProperties,
   Schema
 } from "./models";
 
@@ -57,17 +56,20 @@ export class SchemaRegistryClient implements SchemaRegistry {
    * @return Registered schema's ID.
    */
   async registerSchema(
-    schema: SchemaDescription,
+    schemaGroup: string,
+    schemaName: string,
+    serializationType: string,
+    schemaContent: string,
     options?: RegisterSchemaOptions
-  ): Promise<SchemaId> {
+  ): Promise<SchemaProperties> {
     const response = await this.client.schema.register(
-      schema.group,
-      schema.name,
+      schemaGroup,
+      schemaName,
       // cast due to https://github.com/Azure/autorest.typescript/issues/715
       // serialization type is an extensible enum, and therefore any string
       // should be allowed.
-      schema.serializationType as SerializationType,
-      schema.content,
+      serializationType as SerializationType,
+      schemaContent,
       options
     );
     return convertSchemaIdResponse(response);
@@ -80,15 +82,21 @@ export class SchemaRegistryClient implements SchemaRegistry {
    * @param schema Schema to match.
    * @return Matched schema's ID.
    */
-  async getSchemaId(schema: SchemaDescription, options?: GetSchemaIdOptions): Promise<SchemaId> {
+  async getSchemaId(
+    schemaGroup: string,
+    schemaName: string,
+    serializationType: string,
+    schemaContent: string,
+    options?: GetSchemaIdOptions
+  ): Promise<SchemaProperties> {
     const response = await this.client.schema.queryIdByContent(
-      schema.group,
-      schema.name,
+      schemaGroup,
+      schemaName,
       // cast due to https://github.com/Azure/autorest.typescript/issues/715
       // serialization type is an extensible enum, and therefore any string
       // should be allowed.
-      schema.serializationType as SerializationType,
-      schema.content,
+      serializationType as SerializationType,
+      schemaContent,
       options
     );
     return convertSchemaIdResponse(response);
@@ -101,7 +109,7 @@ export class SchemaRegistryClient implements SchemaRegistry {
    * @param schema Schema to match.
    * @return Matched schema's ID.
    */
-  async getSchemaById(id: string, options?: GetSchemaByIdOptions): Promise<Schema> {
+  async getSchema(id: string, options?: GetSchemaByIdOptions): Promise<Schema> {
     const response = await this.client.schema.getById(id, options);
     return convertSchemaResponse(response);
   }

@@ -11,8 +11,7 @@ import {
   GetSchemaIdOptions,
   RegisterSchemaOptions,
   Schema,
-  SchemaDescription,
-  SchemaId,
+  SchemaProperties,
   SchemaRegistry
 } from "@azure/schema-registry";
 
@@ -62,18 +61,13 @@ describe("SchemaRegistryAvroSerializer", function() {
   it("rejects a schema with different serialization type", async () => {
     const registry = createTestRegistry();
     const serializer = createTestSerializer(false, registry);
-    const schema = await registry.registerSchema({
-      name: "_",
-      content: "_",
-      serializationType: "NotAvro",
-      group: "TestGroup"
-    });
+    const schema = await registry.registerSchema("TestGroup", "_", "NotAvro", "_");
 
     const buffer = Buffer.alloc(36);
-    buffer.write(schema.id, 4, 32, "utf-8");
+    buffer.write(schema.schemaId, 4, 32, "utf-8");
     await assert.isRejected(
       serializer.deserialize(buffer),
-      new RegExp(`${schema.id}.*NotAvro.*avro`)
+      new RegExp(`${schema.schemaId}.*NotAvro.*avro`)
     );
   });
 
@@ -151,12 +145,12 @@ function createTestSerializer(
   registry = createTestRegistry()
 ): SchemaRegistryAvroSerializer {
   if (!autoRegisterSchemas) {
-    registry.registerSchema({
-      name: `${testSchemaObject.namespace}.${testSchemaObject.name}`,
-      group: "TestGroup",
-      content: testSchema,
-      serializationType: "avro"
-    });
+    registry.registerSchema(
+      "TestGroup",
+      `${testSchemaObject.namespace}.${testSchemaObject.name}`,
+      "avro",
+      testSchema
+    );
   }
 
   return new SchemaRegistryAvroSerializer(registry, "TestGroup", { autoRegisterSchemas });
@@ -167,26 +161,32 @@ function createTestRegistry(): SchemaRegistry {
   const mapByContent = new Map<string, Schema>();
   let idCounter = 0;
 
-  return { registerSchema, getSchemaId, getSchemaById };
+  return { registerSchema, getSchemaId, getSchema };
 
   async function registerSchema(
-    schema: SchemaDescription,
+    _schemaGroup: string,
+    _schemaName: string,
+    serializationType: string,
+    schemaContent: string,
     _options?: RegisterSchemaOptions
-  ): Promise<SchemaId> {
-    let result = mapByContent.get(schema.content);
+  ): Promise<SchemaProperties> {
+    let result = mapByContent.get(schemaContent);
     if (!result) {
+      const schemaId = newId();
       result = {
-        id: newId(),
-        content: schema.content,
-        version: 1,
-        location: "",
-        locationById: "",
-        serializationType: schema.serializationType
+        schemaContent,
+        schemaProperties: {
+          schemaId,
+          version: 1,
+          location: "",
+          locationById: "",
+          serializationType
+        }
       };
-      mapByContent.set(result.content, result);
-      mapById.set(result.id, result);
+      mapByContent.set(schemaContent, result);
+      mapById.set(schemaId, result);
     }
-    return result;
+    return result.schemaProperties;
 
     function newId(): string {
       if (idCounter == testSchemaIds.length) {
@@ -199,17 +199,20 @@ function createTestRegistry(): SchemaRegistry {
   }
 
   async function getSchemaId(
-    schema: SchemaDescription,
+    _schemaGroup: string,
+    _schemaName: string,
+    _serializationType: string,
+    schemaContent: string,
     _options?: GetSchemaIdOptions
-  ): Promise<SchemaId> {
-    const result = mapByContent.get(schema.content);
+  ): Promise<SchemaProperties> {
+    const result = mapByContent.get(schemaContent);
     if (!result) {
       throw new Error("No such schema is registered.");
     }
-    return result;
+    return result.schemaProperties;
   }
 
-  async function getSchemaById(id: string, _options?: GetSchemaByIdOptions): Promise<Schema> {
+  async function getSchema(id: string, _options?: GetSchemaByIdOptions): Promise<Schema> {
     const result = mapById.get(id);
     if (!result) {
       throw new Error("No such schema is registered.");

@@ -6,9 +6,9 @@ import { PipelineOptions, OperationOptions } from "@azure/core-http";
 /**
  * Identifies a Schema by its unique ID, version, and location.
  */
-export interface SchemaId {
+export interface SchemaProperties {
   /** ID that uniquely identifies a schema in the registry namespace. */
-  id: string;
+  schemaId: string;
 
   /**
    * Serialization type of schema.
@@ -27,31 +27,13 @@ export interface SchemaId {
 }
 
 /**
- * Schema definition with its group, name, and serialization type.
- */
-export interface SchemaDescription {
-  /** Schema group under which schema is or should be registered. */
-  group: string;
-
-  /** Name of schema.*/
-  name: string;
-
-  /**
-   * Serialization type of schema. Must match serialization type of group.
-   * Currently only 'avro' is supported, but this is subject to change.
-   */
-  serializationType: string;
-
-  /** String representation of schema. */
-  content: string;
-}
-
-/**
  * Schema definition with its unique ID, version, and location.
  */
-export interface Schema extends SchemaId {
+export interface Schema {
   /** String representation of schema. */
-  content: string;
+  schemaContent: string;
+  /** Schema properties */
+  schemaProperties: SchemaProperties;
 }
 
 /**
@@ -90,8 +72,15 @@ export interface SchemaRegistry {
    *
    * @param schema Schema to register.
    * @return Registered schema's ID.
+   *
    */
-  registerSchema(schema: SchemaDescription, options?: RegisterSchemaOptions): Promise<SchemaId>;
+  registerSchema(
+    schemaGroup: string,
+    schemaName: string,
+    serializationType: string,
+    schemaContent: string,
+    options?: RegisterSchemaOptions
+  ): Promise<SchemaProperties>;
 
   /**
    * Gets the ID of an existing schema with matching name, group, type, and
@@ -100,7 +89,13 @@ export interface SchemaRegistry {
    * @param schema Schema to match.
    * @return Matched schema's ID.
    */
-  getSchemaId(schema: SchemaDescription, options?: GetSchemaIdOptions): Promise<SchemaId>;
+  getSchemaId(
+    schemaGroup: string,
+    schemaName: string,
+    serializationType: string,
+    schemaContent: string,
+    options?: GetSchemaIdOptions
+  ): Promise<SchemaProperties>;
 
   /**
    * Gets an existing schema by ID.
@@ -108,5 +103,5 @@ export interface SchemaRegistry {
    * @param id Unique schema ID.
    * @return Schema with given ID.
    */
-  getSchemaById(id: string, options?: GetSchemaByIdOptions): Promise<Schema>;
+  getSchema(id: string, options?: GetSchemaByIdOptions): Promise<Schema>;
 }

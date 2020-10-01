@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { SchemaId, Schema } from "./models";
+import { SchemaProperties, Schema } from "./models";
 
 import {
   SchemaGetByIdResponse,
@@ -30,7 +30,13 @@ type GeneratedResponse = GeneratedSchemaResponse | GeneratedSchemaIdResponse;
  * @internal
  */
 export function convertSchemaResponse(response: GeneratedSchemaResponse): Schema {
-  return convertResponse(response, { content: response.body });
+  const converted = {
+    schemaContent: response.body,
+    schemaProperties: convertResponse(response)
+  };
+
+  Object.defineProperty(converted, "_response", { value: response._response, enumerable: false });
+  return converted;
 }
 
 /**
@@ -38,24 +44,23 @@ export function convertSchemaResponse(response: GeneratedSchemaResponse): Schema
  *
  * @internal
  */
-export function convertSchemaIdResponse(response: GeneratedSchemaIdResponse): SchemaId {
+export function convertSchemaIdResponse(response: GeneratedSchemaIdResponse): SchemaProperties {
+  const converted = convertResponse(response);
   // `!` here because server is required to return this on success, but that
   // is not modeled by the generated client.
-  return convertResponse(response, { id: response.id! });
+  converted.schemaId = response.id!;
+  Object.defineProperty(converted, "_response", { value: response._response, enumerable: false });
+  return converted;
 }
 
-function convertResponse<T>(response: GeneratedResponse, additionalProperties: T): SchemaId & T {
-  const converted = {
+function convertResponse(response: GeneratedResponse): SchemaProperties {
+  return {
     // `!`s here because server is required to return these on success, but that
     // is not modeled by the generated client.
     location: response.location!,
     locationById: response.xSchemaIdLocation!,
-    id: response.xSchemaId!,
+    schemaId: response.xSchemaId!,
     version: response.xSchemaVersion!,
-    serializationType: response.xSchemaType!,
-    ...additionalProperties
+    serializationType: response.xSchemaType!
   };
-
-  Object.defineProperty(converted, "_response", { value: response._response, enumerable: false });
-  return converted;
 }
