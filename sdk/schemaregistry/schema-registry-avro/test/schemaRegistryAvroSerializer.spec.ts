@@ -40,7 +40,7 @@ const testSchemaObject: avro.schema.RecordType = {
   ]
 };
 
-const testGroup = "azsdk_js_test_group";
+const testGroup = "nicholg01";
 
 const testSchemaIds = [
   "{773E17BE-793E-40B0-98F1-0A6EA3C11895}",
